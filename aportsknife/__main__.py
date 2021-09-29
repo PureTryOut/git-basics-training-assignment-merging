@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2020 Bart Ribbers <bribbers@disroot.org>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-import sys
+import argparse
 import os
 
 from xdg import BaseDirectory
@@ -95,34 +95,26 @@ def main():
         print("This script only works from the root of the aports tree!")
         exit(1)
 
-    if len(sys.argv) < 2:
-        print("This script requires at minimum 1 argument, the action to " +
-              "execute!")
-        print("Some actions might require more arguments.")
-        print("Example usage:")
-        print(f"\t{sys.argv[0]} update 5.59.0 5.60.0")
-        print(f"\t{sys.argv[0]} build_all")
+    parser = argparse.ArgumentParser(
+            prog="aportsknife",
+            description="Swiss army knife for bulk aports operations.")
+    sub = parser.add_subparsers(title="action", dest="action")
+    update = sub.add_parser("update", help="update pkgver in bulk")
+    update.add_argument("pkgver_old")
+    update.add_argument("pkgver_new")
+    update.add_argument(
+            "-b", "--build",
+            action="store_true",
+            help="Also build the updated packages")
 
-        exit(1)
+    args = parser.parse_args()
 
-    if sys.argv[1] == "update":
-        if len(sys.argv) < 4:
-            print("You need to specify a pkgver to update from and to!")
-            print(f"\t{sys.argv[0]} update 5.59.0 5.60.0")
-            print(f"\t{sys.argv[0]} update 5.59.0 5.60.0 build")
+    if args.action:
+        if args.action == "update":
+            update_pkgver(args.pkgver_old, args.pkgver_new, args.build)
 
-            exit(1)
-
-        if len(sys.argv) == 5 and sys.argv[4] == "build":
-            update_pkgver(sys.argv[2], sys.argv[3], True)
-        else:
-            update_pkgver(sys.argv[2], sys.argv[3], False)
-    elif sys.argv[1] == "build_all":
-        if (len(sys.argv) == 3 and
-                sys.argv[2].rstrip('/') in ["main", "community", "testing"]):
-            build_all(sys.argv[2].rstrip('/'))
-        else:
-            build_all()
+    else:
+        print("Run aportsknife -h for usage information")
 
 
 if __name__ == '__main__':
