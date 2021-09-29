@@ -3,87 +3,61 @@
 
 import argparse
 import os
+from pathlib import Path
 
-from xdg import BaseDirectory
-
-from aportsknife import Package
-
-
-def find_packages_with_pkgver(pkgver):
-    # Make a list of all packages to modify
-    packages_to_edit = []
-    for root, dirs, files in os.walk(cwd):
-        for name in files:
-            if name == "APKBUILD":
-                filename = os.path.join(root, name)
-
-                # Check if this is a package that we have to modify by
-                # verifying the old pkgver is present
-                with open(filename, "r") as file_handler:
-                    if pkgver in file_handler.read():
-                        packages_to_edit.append(Package(cwd, filename))
-                        break
-
-    return packages_to_edit
+from aportsknife import Package, Repository
 
 
-def find_packages(repository):
-    # Make a list of all packages in the specified repository
-    packages = []
-    for root, dirs, files in os.walk(f"{cwd}/{repository}"):
-        for name in files:
-            if name == "APKBUILD":
-                filename = os.path.join(root, name)
-                packages.append(Package(cwd, filename))
-                break
+def find_packages_with_pkgver(pkgver) -> [Repository]:
+    # Make a list of all repositories
+    repositories = []
+    for directory in [x for x in Path(cwd).iterdir() if x.is_dir()]:
+        if len(directory.name.split(".")) > 1:
+            continue
 
-    return packages
+        is_repository = [] != [x for x in directory.iterdir() if x.is_file()
+                               and x.name == ".rootbld-repositories"]
+
+        if not is_repository:
+            continue
+
+        repository = Repository(directory, [])
+
+        # Make a list of all packages to update
+        for package in [x for x in directory.iterdir() if x.is_dir()]:
+            apkbuild = [x for x in package.glob("**/*") if x.is_file()
+                        and x.name == "APKBUILD"]
+            if len(apkbuild) < 1:
+                continue
+
+            apkbuild = apkbuild[0]
+
+            with apkbuild.open() as file_handler:
+                if pkgver in file_handler.read():
+                    # TODO: fix that CWD thing
+                    repository.packages.append(Package(
+                        cwd,
+                        str(apkbuild)))
+
+        repositories.append(repository)
+
+    return repositories
 
 
 def update_pkgver(pkgver_old, pkgver_new, build=False):
-    packages_to_edit = find_packages_with_pkgver(pkgver_old)
+    repositories = find_packages_with_pkgver(pkgver_old)
 
-    print("Updating pkgvers")
-    for package in packages_to_edit:
-        package.update_pkgver(pkgver_old, pkgver_new)
+    for repository in repositories:
+        repository.update_packages_pkgver(pkgver_old, pkgver_new)
 
-    print("Updating checksums")
-    for package in packages_to_edit:
-        package.update_checksums()
+    print("\n")
 
     if build:
-        for package in packages_to_edit:
-            package.build()
+        for repository in repositories:
+            repository.sort()
 
-
-def build_all(repository=None):
-    packages = []
-
-    if repository is not None:
-        packages += find_packages(repository)
-    else:
-        for repository in "main", "community", "testing":
-            packages += find_packages(repository)
-
-    filename = (BaseDirectory.save_data_path('aportsknife') +
-                "/skip_packages.txt")
-    packages_to_skip = []
-    if os.path.isfile(filename):
-        with open(filename, 'r') as f:
-            for line in f:
-                packages_to_skip.append(Package(
-                    cwd,
-                    f"{cwd}/{line.strip()}/APKBUILD"))
-
-    # Skip packages that are in the skip list
-    packages = [i for i in packages if i not in packages_to_skip]
-
-    if packages is not None and len(packages) == 0:
-        print("No packages found to build, exiting")
-        exit(0)
-
-    for package in packages:
-        package.build()
+            for package in repository.packages:
+                package.build()
 
 
 def main():

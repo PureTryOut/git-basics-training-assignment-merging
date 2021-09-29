@@ -41,32 +41,32 @@ class Package():
     def update_checksums(self):
         os.chdir(os.path.dirname(self.path))
 
-        failure = False
         try:
-            subprocess.check_output(["abuild", "checksum"])
+            subprocess.run(
+                    ["abuild", "checksum"],
+                    check=True,
+                    capture_output=True)
             print(".", end="", flush=True)
-        except subprocess.CalledProcessError as ex:
-            failure = True
-            print(f"Something went wrong while updating checksums of " +
+            os.chdir(self.repository_root)
+        except subprocess.CalledProcessError:
+            print("Something went wrong while updating checksums of " +
                   f"{self.path}")
             print("Please run \"abuild checksum\" in the package to " +
                   "determine the issue")
-        finally:
-            os.chdir(self.repository_root)
 
-            if failure:
-                exit(1)
+            exit(1)
 
     def build(self):
         os.chdir(os.path.dirname(self.path))
 
-        print(f"Building {self.long_name}", end="... ", flush=True)
-        result = subprocess.run(["abuild", "rootbld"], capture_output=True,
-                                text=True)
-
-        if result.returncode == 0:
+        try:
+            print(f"Building {self.long_name}", end="... ", flush=True)
+            result = subprocess.run(
+                    ["abuild", "rootbld"],
+                    check=True,
+                    capture_output=True)
             print("Done!")
-        else:
+        except subprocess.CalledProcessError:
             print(f"\nSomething went wrong while building {self.long_name}")
             filename = BaseDirectory.save_data_path(
                 f"aportsknife/build/{self.repository}/") + self.short_name
@@ -88,7 +88,7 @@ class Package():
 
                 print(f"\n{self.long_name} will be skipped in subsequence " +
                       "runs")
-                print(f"If you don't want to skip it anymore, remove it " +
+                print("If you don't want to skip it anymore, remove it " +
                       "from " + BaseDirectory.save_data_path("aportsknife") +
                       "/skip_packages.txt")
 
