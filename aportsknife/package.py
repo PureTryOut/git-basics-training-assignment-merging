@@ -61,18 +61,17 @@ class Package():
 
         try:
             print(f"Building {self.long_name}", end="... ", flush=True)
-            result = subprocess.run(
+            subprocess.run(
                     ["abuild", "rootbld"],
                     check=True,
                     capture_output=True)
             print("Done!")
-        except subprocess.CalledProcessError:
+        except subprocess.CalledProcessError as ex:
             print(f"\nSomething went wrong while building {self.long_name}")
             filename = BaseDirectory.save_data_path(
                 f"aportsknife/build/{self.repository}/") + self.short_name
             with open(filename, 'w') as log_file:
-                log_file.write(result.stdout)
-                log_file.write(result.stderr)
+                log_file.write(str(ex.output))
                 print(f"The build log is written to {filename}")
 
             skip_package = input("Do you want to skip this package while " +
