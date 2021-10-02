@@ -1,7 +1,7 @@
 import subprocess
 
 
-class Repository():
+class Repository:
     def __init__(self, path, packages):
         self.path = path
         self.name = path.name
@@ -12,12 +12,11 @@ class Repository():
         for package in self.packages:
             packages_to_sort.append(package.short_name)
 
-        ret = subprocess.run([
-            "ap",
-            "builddirs",
-            "-d",
-            self.path] +
-            packages_to_sort, check=True, capture_output=True)
+        ret = subprocess.run(
+            ["ap", "builddirs", "-d", self.path] + packages_to_sort,
+            check=True,
+            capture_output=True,
+        )
         sorted_packages = ret.stdout.decode().split("\n")
 
         packages = []

@@ -7,12 +7,12 @@ import subprocess
 from xdg import BaseDirectory
 
 
-class Package():
+class Package:
     def __init__(self, repository_root, path):
         self.repository_root = repository_root
         self.path = path
-        self.repository = path.rsplit('/', 3)[1]
-        self.short_name = path.rsplit('/', 2)[1]
+        self.repository = path.rsplit("/", 3)[1]
+        self.short_name = path.rsplit("/", 2)[1]
         self.long_name = f"{self.repository}/{self.short_name}"
 
     def __eq__(self, other):
@@ -21,9 +21,9 @@ class Package():
         return False
 
     def update_pkgver(self, pkgver_old, pkgver_new):
-        os.rename(self.path, self.path + '~')
-        destination = open(self.path, 'w')
-        source = open(self.path + '~', 'r')
+        os.rename(self.path, self.path + "~")
+        destination = open(self.path, "w")
+        source = open(self.path + "~", "r")
 
         for line in source:
             if "pkgver=" in line and pkgver_old in line:
@@ -36,23 +36,26 @@ class Package():
         # Make sure we clean up after ourselves
         destination.close()
         source.close()
-        os.remove(self.path + '~')
+        os.remove(self.path + "~")
 
     def update_checksums(self):
         os.chdir(os.path.dirname(self.path))
 
         try:
             subprocess.run(
-                    ["abuild", "checksum"],
-                    check=True,
-                    capture_output=True)
+                ["abuild", "checksum"], check=True, capture_output=True
+            )
             print(".", end="", flush=True)
             os.chdir(self.repository_root)
         except subprocess.CalledProcessError:
-            print("Something went wrong while updating checksums of " +
-                  f"{self.path}")
-            print("Please run \"abuild checksum\" in the package to " +
-                  "determine the issue")
+            print(
+                "Something went wrong while updating checksums of "
+                + f"{self.path}"
+            )
+            print(
+                'Please run "abuild checksum" in the package to '
+                + "determine the issue"
+            )
 
             exit(1)
 
@@ -62,33 +65,45 @@ class Package():
         try:
             print(f"Building {self.long_name}", end="... ", flush=True)
             subprocess.run(
-                    ["abuild", "rootbld"],
-                    check=True,
-                    capture_output=True)
+                ["abuild", "rootbld"], check=True, capture_output=True
+            )
             print("Done!")
         except subprocess.CalledProcessError as ex:
             print(f"\nSomething went wrong while building {self.long_name}")
-            filename = BaseDirectory.save_data_path(
-                f"aportsknife/build/{self.repository}/") + self.short_name
-            with open(filename, 'w') as log_file:
+            filename = (
+                BaseDirectory.save_data_path(
+                    f"aportsknife/build/{self.repository}/"
+                )
+                + self.short_name
+            )
+            with open(filename, "w") as log_file:
                 log_file.write(str(ex.output))
                 print(f"The build log is written to {filename}")
 
-            skip_package = input("Do you want to skip this package while " +
-                                 "building next time? ")
+            skip_package = input(
+                "Do you want to skip this package while "
+                + "building next time? "
+            )
             if skip_package in ["true", "yes", "y"]:
-                filename = (BaseDirectory.save_data_path("aportsknife") +
-                            "/skip_packages.txt")
+                filename = (
+                    BaseDirectory.save_data_path("aportsknife")
+                    + "/skip_packages.txt"
+                )
                 if not os.path.isfile(filename):
-                    open(filename, 'x')
+                    open(filename, "x")
 
-                with open(filename, 'a') as skip_file:
+                with open(filename, "a") as skip_file:
                     skip_file.write(self.long_name + "\n")
 
-                print(f"\n{self.long_name} will be skipped in subsequence " +
-                      "runs")
-                print("If you don't want to skip it anymore, remove it " +
-                      "from " + BaseDirectory.save_data_path("aportsknife") +
-                      "/skip_packages.txt")
+                print(
+                    f"\n{self.long_name} will be skipped in subsequence "
+                    + "runs"
+                )
+                print(
+                    "If you don't want to skip it anymore, remove it "
+                    + "from "
+                    + BaseDirectory.save_data_path("aportsknife")
+                    + "/skip_packages.txt"
+                )
 
         os.chdir(self.repository_root)

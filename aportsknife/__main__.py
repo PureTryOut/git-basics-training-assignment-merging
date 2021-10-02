@@ -16,8 +16,11 @@ def find_repositories() -> [Repository]:
         if len(directory.name.split(".")) > 1:
             continue
 
-        is_repository = [] != [x for x in directory.iterdir() if x.is_file()
-                               and x.name == ".rootbld-repositories"]
+        is_repository = [] != [
+            x
+            for x in directory.iterdir()
+            if x.is_file() and x.name == ".rootbld-repositories"
+        ]
 
         if not is_repository:
             continue
@@ -33,8 +36,11 @@ def find_packages_with_pkgver(pkgver) -> [Repository]:
     for repository in repositories:
         # Make a list of all packages to update
         for package in [x for x in repository.path.iterdir() if x.is_dir()]:
-            apkbuild = [x for x in package.glob("**/*") if x.is_file()
-                        and x.name == "APKBUILD"]
+            apkbuild = [
+                x
+                for x in package.glob("**/*")
+                if x.is_file() and x.name == "APKBUILD"
+            ]
             if len(apkbuild) < 1:
                 continue
 
@@ -43,9 +49,7 @@ def find_packages_with_pkgver(pkgver) -> [Repository]:
             with apkbuild.open() as file_handler:
                 if pkgver in file_handler.read():
                     # TODO: fix that CWD thing
-                    repository.packages.append(Package(
-                        cwd,
-                        str(apkbuild)))
+                    repository.packages.append(Package(cwd, str(apkbuild)))
 
     return repositories
 
@@ -69,14 +73,15 @@ def update_pkgver(pkgver_old, pkgver_new, build=False):
 def find_modified_packages() -> [Repository]:
     repositories = find_repositories()
     repo = git.Repo(cwd)
-    changed_files = [x for x in repo.index.diff('master')
-                     if "APKBUILD" in x.a_path]
+    changed_files = [
+        x for x in repo.index.diff("master") if "APKBUILD" in x.a_path
+    ]
     for changed_file in changed_files:
         for repository in repositories:
             if repository.name in changed_file.a_path:
-                repository.packages.append(Package(
-                    cwd,
-                    f"{cwd}/" + str(changed_file.a_path)))
+                repository.packages.append(
+                    Package(cwd, f"{cwd}/" + str(changed_file.a_path))
+                )
 
     for repository in repositories:
         repository.sort()
@@ -101,16 +106,19 @@ def main():
         exit(1)
 
     parser = argparse.ArgumentParser(
-            prog="aportsknife",
-            description="Swiss army knife for bulk aports operations.")
+        prog="aportsknife",
+        description="Swiss army knife for bulk aports operations.",
+    )
     sub = parser.add_subparsers(title="action", dest="action")
     update = sub.add_parser("update", help="update pkgver in bulk")
     update.add_argument("pkgver_old")
     update.add_argument("pkgver_new")
     update.add_argument(
-            "-b", "--build",
-            action="store_true",
-            help="Also build the updated packages")
+        "-b",
+        "--build",
+        action="store_true",
+        help="Also build the updated packages",
+    )
 
     sub.add_parser("build", help="build all updated packages in this branch")
 
@@ -126,5 +134,5 @@ def main():
         print("Run aportsknife -h for usage information")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
