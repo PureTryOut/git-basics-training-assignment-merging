@@ -73,8 +73,15 @@ def update_pkgver(pkgver_old, pkgver_new, build=False):
 def find_modified_packages() -> [Repository]:
     repositories = find_repositories()
     repo = git.Repo(cwd)
+
+    # Get committed and staged files
     changed_files = [
         x for x in repo.index.diff("master") if "APKBUILD" in x.a_path
+    ]
+
+    # Get unstaged files
+    changed_files += [
+        x for x in repo.index.diff(None) if "APKBUILD" in x.a_path
     ]
     for changed_file in changed_files:
         for repository in repositories:
