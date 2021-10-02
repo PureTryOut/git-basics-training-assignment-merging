@@ -8,7 +8,7 @@ setup(
         author='Bart Ribbers',
         author_email='bribbers@disroot.org',
         description='A "swiss knife" tool for Alpine Linux aports',
-        install_requires=['pyxdg'],
+        install_requires=['pyxdg', 'gitpython'],
         packages=find_packages(include=['aportsknife']),
         include_package_data=True,
 

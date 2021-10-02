@@ -5,11 +5,12 @@ import argparse
 import os
 from pathlib import Path
 
+import git
+
 from aportsknife import Package, Repository
 
 
-def find_packages_with_pkgver(pkgver) -> [Repository]:
-    # Make a list of all repositories
+def find_repositories() -> [Repository]:
     repositories = []
     for directory in [x for x in Path(cwd).iterdir() if x.is_dir()]:
         if len(directory.name.split(".")) > 1:
@@ -21,10 +22,17 @@ def find_packages_with_pkgver(pkgver) -> [Repository]:
         if not is_repository:
             continue
 
-        repository = Repository(directory, [])
+        repositories.append(Repository(directory, []))
 
+    return repositories
+
+
+def find_packages_with_pkgver(pkgver) -> [Repository]:
+    # Make a list of all repositories
+    repositories = find_repositories()
+    for repository in repositories:
         # Make a list of all packages to update
-        for package in [x for x in directory.iterdir() if x.is_dir()]:
+        for package in [x for x in repository.path.iterdir() if x.is_dir()]:
             apkbuild = [x for x in package.glob("**/*") if x.is_file()
                         and x.name == "APKBUILD"]
             if len(apkbuild) < 1:
@@ -38,8 +46,6 @@ def find_packages_with_pkgver(pkgver) -> [Repository]:
                     repository.packages.append(Package(
                         cwd,
                         str(apkbuild)))
-
-        repositories.append(repository)
 
     return repositories
 
@@ -58,6 +64,31 @@ def update_pkgver(pkgver_old, pkgver_new, build=False):
 
             for package in repository.packages:
                 package.build()
+
+
+def find_modified_packages() -> [Repository]:
+    repositories = find_repositories()
+    repo = git.Repo(cwd)
+    changed_files = [x for x in repo.index.diff('master')
+                     if "APKBUILD" in x.a_path]
+    for changed_file in changed_files:
+        for repository in repositories:
+            if repository.name in changed_file.a_path:
+                repository.packages.append(Package(
+                    cwd,
+                    f"{cwd}/" + str(changed_file.a_path)))
+
+    for repository in repositories:
+        repository.sort()
+
+    return repositories
+
+
+def build_branch():
+    repositories = find_modified_packages()
+    for repository in repositories:
+        for package in repository.packages:
+            package.build()
 
 
 def main():
@@ -81,11 +112,15 @@ def main():
             action="store_true",
             help="Also build the updated packages")
 
+    sub.add_parser("build", help="build all updated packages in this branch")
+
     args = parser.parse_args()
 
     if args.action:
         if args.action == "update":
             update_pkgver(args.pkgver_old, args.pkgver_new, args.build)
+        elif args.action == "build":
+            build_branch()
 
     else:
         print("Run aportsknife -h for usage information")
