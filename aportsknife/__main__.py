@@ -118,8 +118,8 @@ def main():
     )
     sub = parser.add_subparsers(title="action", dest="action")
     update = sub.add_parser("update", help="update pkgver in bulk")
-    update.add_argument("pkgver_old")
-    update.add_argument("pkgver_new")
+    update.add_argument("pkgver_old", help="the pkgver to update from")
+    update.add_argument("pkgver_new", help="the pkgver to update to")
     update.add_argument(
         "-b",
         "--build",
