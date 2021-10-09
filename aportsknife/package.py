@@ -8,22 +8,27 @@ from xdg import BaseDirectory
 
 
 class Package:
-    def __init__(self, repository_root, path):
-        self.repository_root = repository_root
-        self.path = path
-        self.repository = path.rsplit("/", 3)[1]
-        self.short_name = path.rsplit("/", 2)[1]
-        self.long_name = f"{self.repository}/{self.short_name}"
+    def __init__(self, repository, name):
+        self.repository = repository
+        self.path = repository.path / f"{name}"
+        self.name = name
+        self.long_name = f"{repository.name}/{name}"
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         if self.path == other.path:
             return True
         return False
 
+    def __str__(self) -> str:
+        return self.long_name
+
     def update_pkgver(self, pkgver_old, pkgver_new):
-        os.rename(self.path, self.path + "~")
-        destination = open(self.path, "w")
-        source = open(self.path + "~", "r")
+        apkbuild = self.path / "APKBUILD"
+        tmp_apkbuild = self.path / "APKBUILD~"
+
+        os.rename(apkbuild, tmp_apkbuild)
+        destination = open(apkbuild, "w")
+        source = open(tmp_apkbuild, "r")
 
         for line in source:
             if "pkgver=" in line and pkgver_old in line:
@@ -36,17 +41,18 @@ class Package:
         # Make sure we clean up after ourselves
         destination.close()
         source.close()
-        os.remove(self.path + "~")
+        os.remove(tmp_apkbuild)
+
+        self.update_checksums()
 
     def update_checksums(self):
-        os.chdir(os.path.dirname(self.path))
+        os.chdir(self.path)
 
         try:
             subprocess.run(
                 ["abuild", "checksum"], check=True, capture_output=True
             )
             print(".", end="", flush=True)
-            os.chdir(self.repository_root)
         except subprocess.CalledProcessError:
             print(
                 "Something went wrong while updating checksums of "
@@ -60,7 +66,7 @@ class Package:
             exit(1)
 
     def build(self):
-        os.chdir(os.path.dirname(self.path))
+        os.chdir(self.path)
 
         try:
             print(f"Building {self.long_name}", end="... ", flush=True)
@@ -71,10 +77,7 @@ class Package:
         except subprocess.CalledProcessError as ex:
             print(f"\nSomething went wrong while building {self.long_name}")
             filename = (
-                BaseDirectory.save_data_path(
-                    f"aportsknife/build/{self.repository}/"
-                )
-                + self.short_name
+                BaseDirectory.save_data_path("aportsknife/build/") + self.name
             )
             with open(filename, "w") as log_file:
                 log_file.write(str(ex.output))
@@ -105,5 +108,3 @@ class Package:
                     + BaseDirectory.save_data_path("aportsknife")
                     + "/skip_packages.txt"
                 )
-
-        os.chdir(self.repository_root)

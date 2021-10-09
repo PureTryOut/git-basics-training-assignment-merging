@@ -6,13 +6,36 @@ import os
 from pathlib import Path
 
 import git
+import xdg
+import yaml
 
-from aportsknife import Package, Repository
+from aportsknife import Package, Repository, Settings
+
+
+def init() -> None:
+    aports_path = Path(os.path.expandvars(input("Path to aports tree: ")))
+
+    if not aports_path.is_dir():
+        print("That directory does not exist")
+
+    if aports_path.name != "aports":
+        answer = input(
+            "This does not seem to be an aports tree, are you sure? [y/N] "
+        )
+
+        if answer != "y":
+            exit(0)
+
+    with open(
+        xdg.BaseDirectory.save_config_path("aportsknife") + "/config.yaml", "w"
+    ) as file:
+        yaml.dump({"aports_path": str(aports_path)}, file)
 
 
 def find_repositories() -> [Repository]:
+    settings = Settings()
     repositories = []
-    for directory in [x for x in Path(cwd).iterdir() if x.is_dir()]:
+    for directory in [x for x in settings.aports_path.iterdir() if x.is_dir()]:
         if len(directory.name.split(".")) > 1:
             continue
 
@@ -48,8 +71,9 @@ def find_packages_with_pkgver(pkgver) -> [Repository]:
 
             with apkbuild.open() as file_handler:
                 if pkgver in file_handler.read():
-                    # TODO: fix that CWD thing
-                    repository.packages.append(Package(cwd, str(apkbuild)))
+                    repository.packages.append(
+                        Package(repository, str(apkbuild).split("/")[-2])
+                    )
 
     return repositories
 
@@ -71,8 +95,10 @@ def update_pkgver(pkgver_old, pkgver_new, build=False):
 
 
 def find_modified_packages() -> [Repository]:
+    settings = Settings()
+
     repositories = find_repositories()
-    repo = git.Repo(cwd)
+    repo = git.Repo(settings.aports_path)
 
     # Get committed and staged files
     changed_files = [
@@ -87,7 +113,10 @@ def find_modified_packages() -> [Repository]:
         for repository in repositories:
             if repository.name in changed_file.a_path:
                 repository.packages.append(
-                    Package(cwd, f"{cwd}/" + str(changed_file.a_path))
+                    Package(
+                        repository,
+                        str(changed_file.a_path.split("/")[-2]),
+                    )
                 )
 
     for repository in repositories:
@@ -104,19 +133,16 @@ def build_branch():
 
 
 def main():
-    # We have to check if the current working directory contains "aports" and
-    # we're actually in an aports tree
-    global cwd
-    cwd = os.getcwd()
-    if os.path.basename(cwd) != "aports":
-        print("This script only works from the root of the aports tree!")
-        exit(1)
-
     parser = argparse.ArgumentParser(
         prog="aportsknife",
         description="Swiss army knife for bulk aports operations.",
     )
     sub = parser.add_subparsers(title="action", dest="action")
+
+    # Init command
+    sub.add_parser("init", help="initialize aportsknife")
+
+    # Update command
     update = sub.add_parser("update", help="update pkgver in bulk")
     update.add_argument("pkgver_old", help="the pkgver to update from")
     update.add_argument("pkgver_new", help="the pkgver to update to")
@@ -127,12 +153,25 @@ def main():
         help="Also build the updated packages",
     )
 
+    # Build command
     sub.add_parser("build", help="build all updated packages in this branch")
 
     args = parser.parse_args()
 
     if args.action:
-        if args.action == "update":
+        if (
+            args.action != "init"
+            and not Path(
+                xdg.BaseDirectory.save_config_path("aportsknife")
+                + "/config.yaml"
+            ).is_file()
+        ):
+            print("Please run aportsknife init first")
+            exit(0)
+
+        if args.action == "init":
+            init()
+        elif args.action == "update":
             update_pkgver(args.pkgver_old, args.pkgver_new, args.build)
         elif args.action == "build":
             build_branch()

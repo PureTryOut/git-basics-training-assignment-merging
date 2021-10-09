@@ -10,7 +10,7 @@ class Repository:
     def sort(self):
         packages_to_sort = []
         for package in self.packages:
-            packages_to_sort.append(package.short_name)
+            packages_to_sort.append(package.name)
 
         ret = subprocess.run(
             ["ap", "builddirs", "-d", self.path] + packages_to_sort,
@@ -22,7 +22,7 @@ class Repository:
         packages = []
         for sorted_package in sorted_packages:
             for package in self.packages:
-                if package.path.replace("/APKBUILD", "") == sorted_package:
+                if str(package.path) == sorted_package:
                     packages.append(package)
 
         self.packages = packages
@@ -30,4 +30,3 @@ class Repository:
     def update_packages_pkgver(self, pkgver_old, pkgver_new):
         for package in self.packages:
             package.update_pkgver(pkgver_old, pkgver_new)
-            package.update_checksums()

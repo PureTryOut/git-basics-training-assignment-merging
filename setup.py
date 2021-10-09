@@ -1,5 +1,3 @@
-import os
-
 from setuptools import find_packages, setup
 
 setup(
@@ -9,7 +7,7 @@ setup(
         author='Bart Ribbers',
         author_email='bribbers@disroot.org',
         description='A "swiss knife" tool for Alpine Linux aports',
-        install_requires=['pyxdg', 'gitpython'],
+        install_requires=['pyxdg', 'gitpython', 'pyyaml'],
         packages=find_packages(include=['aportsknife']),
         include_package_data=True,
 
