@@ -80,7 +80,7 @@ class Package:
                 BaseDirectory.save_data_path("aportsknife/build/") + self.name
             )
             with open(filename, "w") as log_file:
-                log_file.write(str(ex.output))
+                log_file.write(ex.output.decode())
                 print(f"The build log is written to {filename}")
 
             skip_package = input(
