@@ -83,28 +83,4 @@ class Package:
                 log_file.write(ex.output.decode())
                 print(f"The build log is written to {filename}")
 
-            skip_package = input(
-                "Do you want to skip this package while "
-                + "building next time? "
-            )
-            if skip_package in ["true", "yes", "y"]:
-                filename = (
-                    BaseDirectory.save_data_path("aportsknife")
-                    + "/skip_packages.txt"
-                )
-                if not os.path.isfile(filename):
-                    open(filename, "x")
-
-                with open(filename, "a") as skip_file:
-                    skip_file.write(self.long_name + "\n")
-
-                print(
-                    f"\n{self.long_name} will be skipped in subsequence "
-                    + "runs"
-                )
-                print(
-                    "If you don't want to skip it anymore, remove it "
-                    + "from "
-                    + BaseDirectory.save_data_path("aportsknife")
-                    + "/skip_packages.txt"
-                )
+            exit(0)
