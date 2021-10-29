@@ -55,7 +55,7 @@ class Package:
             print(".", end="", flush=True)
         except subprocess.CalledProcessError:
             print(
-                "Something went wrong while updating checksums of "
+                "\nSomething went wrong while updating checksums of "
                 + f"{self.path}"
             )
             print(
