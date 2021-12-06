@@ -69,11 +69,19 @@ def find_packages_with_pkgver(pkgver) -> [Repository]:
 
             apkbuild = apkbuild[0]
 
-            with apkbuild.open() as file_handler:
-                if pkgver in file_handler.read():
-                    repository.packages.append(
-                        Package(repository, str(apkbuild).split("/")[-2])
-                    )
+            with open(apkbuild) as source:
+                for line in source:
+                    if "pkgver=" in line:
+                        # Example: "pkgver=5.12.3\n"
+                        # So split by =, take only the version and remove the
+                        # new line
+                        apkbuild_pkgver = line.split("=")[1].removesuffix("\n")
+                        if apkbuild_pkgver == pkgver:
+                            repository.packages.append(
+                                Package(
+                                    repository, str(apkbuild).split("/")[-2]
+                                )
+                            )
 
     return repositories
 
