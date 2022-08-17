@@ -1,8 +1,9 @@
-.venv/
+.venv
 build/
 *.egg-info/
 .idea/
 __pycache__
+.vscode
 
 # We want to work with as many versions of our deps as possible as we can't know what distributions might have in their repos
 # So we'll act like we're a library when it comes to dependency versions

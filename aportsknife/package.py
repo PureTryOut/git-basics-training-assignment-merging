@@ -22,7 +22,7 @@ class Package:
     def __str__(self) -> str:
         return self.long_name
 
-    def update_pkgver(self, pkgver_old, pkgver_new):
+    def update_pkgver(self, pkgver):
         apkbuild = self.path / "APKBUILD"
         tmp_apkbuild = self.path / "APKBUILD~"
 
@@ -31,8 +31,8 @@ class Package:
         source = open(tmp_apkbuild, "r")
 
         for line in source:
-            if "pkgver=" in line and pkgver_old in line:
-                line = line.replace(pkgver_old, pkgver_new)
+            if "pkgver=" in line:
+                line = line.replace(line.split("=")[1], pkgver + "\n")
             elif "pkgrel=" in line:
                 line = line.replace(line, "pkgrel=0\n")
 
@@ -49,19 +49,11 @@ class Package:
         os.chdir(self.path)
 
         try:
-            subprocess.run(
-                ["abuild", "checksum"], check=True, capture_output=True
-            )
+            subprocess.run(["abuild", "checksum"], check=True, capture_output=True)
             print(".", end="", flush=True)
         except subprocess.CalledProcessError:
-            print(
-                "\nSomething went wrong while updating checksums of "
-                + f"{self.path}"
-            )
-            print(
-                'Please run "abuild checksum" in the package to '
-                + "determine the issue"
-            )
+            print("\nSomething went wrong while updating checksums of " + f"{self.path}")
+            print('Please run "abuild checksum" in the package to ' + "determine the issue")
 
             exit(1)
 
@@ -70,15 +62,11 @@ class Package:
 
         try:
             print(f"Building {self.long_name}", end="... ", flush=True)
-            subprocess.run(
-                ["abuild", "rootbld"], check=True, capture_output=True
-            )
+            subprocess.run(["abuild", "rootbld"], check=True, capture_output=True)
             print("Done!")
         except subprocess.CalledProcessError as ex:
             print(f"\nSomething went wrong while building {self.long_name}")
-            filename = (
-                BaseDirectory.save_data_path("aportsknife/build/") + self.name
-            )
+            filename = BaseDirectory.save_data_path("aportsknife/build/") + self.name
             with open(filename, "w") as log_file:
                 log_file.write(ex.output.decode())
                 print(f"The build log is written to {filename}")

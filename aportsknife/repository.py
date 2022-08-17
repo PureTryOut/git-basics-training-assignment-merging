@@ -7,6 +7,9 @@ class Repository:
         self.name = path.name
         self.packages = packages
 
+    def __eq__(self, other):
+        return self.name == other.name
+
     def sort(self):
         packages_to_sort = []
         for package in self.packages:
@@ -27,6 +30,6 @@ class Repository:
 
         self.packages = packages
 
-    def update_packages_pkgver(self, pkgver_old, pkgver_new):
+    def update_packages_pkgver(self, pkgver):
         for package in self.packages:
-            package.update_pkgver(pkgver_old, pkgver_new)
+            package.update_pkgver(pkgver)
