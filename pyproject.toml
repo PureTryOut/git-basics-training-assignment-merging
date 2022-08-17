@@ -10,7 +10,7 @@ packages = [
 ]
 
 [tool.poetry.scripts]
-aportsknife = "aportsknife.__main__:main"
+aportsknife = "aportsknife:main"
 
 [tool.poetry.dependencies]
 python = ">=3.10,<4.0"
