@@ -48,12 +48,12 @@ def main():
 
     # Package selectors
     parser.add_argument(
-        "--version",
+        "--select-version",
         type=str,
         help="Select packages with this version",
     )
     parser.add_argument(
-        "--changed",
+        "--select-changed",
         action="store_true",
         help="Select packages changed in the current git branch",
     )
@@ -84,7 +84,7 @@ def main():
 
     selectors_used = False
     actions_used = False
-    if args.version is not None or args.changed is not False:
+    if args.select_version is not None or args.select_changed is not False:
         selectors_used = True
 
     if args.set_version is not None or args.build is not False:
@@ -113,12 +113,12 @@ def main():
     print("Finding packages...")
 
     repositories: List[Repository] = []
-    if args.version is not None:
+    if args.select_version is not None:
         found_packages_in_repositories = find_packages_with_pkgver(args.version)
 
         combine_repository_lists(repositories, found_packages_in_repositories)
 
-    if args.changed is not None:
+    if args.select_changed is not None:
         found_packages_in_repositories = find_modified_packages()
 
         combine_repository_lists(repositories, found_packages_in_repositories)
