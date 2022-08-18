@@ -104,8 +104,8 @@ def main():
             if found_repository not in list1:
                 list1.append(found_repository)
             else:
+                repository = list1[list1.index(found_repository)]
                 for package in found_repository.packages:
-                    repository = list1[list1.index(found_repository)]
                     if package not in repository.packages:
                         repository.packages.append(package)
 

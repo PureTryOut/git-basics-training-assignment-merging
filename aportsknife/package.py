@@ -15,9 +15,7 @@ class Package:
         self.long_name = f"{repository.name}/{name}"
 
     def __eq__(self, other) -> bool:
-        if self.path == other.path:
-            return True
-        return False
+        return self.path == other.path
 
     def __str__(self) -> str:
         return self.long_name
