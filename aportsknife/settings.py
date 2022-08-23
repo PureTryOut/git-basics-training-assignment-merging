@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2022 Bart Ribbers <bribbers@disroot.org>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 from pathlib import Path
 
 import xdg
@@ -8,8 +11,7 @@ class Settings:
     def __init__(self):
         loaded_settings = yaml.safe_load(
             open(
-                xdg.BaseDirectory.save_config_path("aportsknife")
-                + "/config.yaml",
+                xdg.BaseDirectory.save_config_path("aportsknife") + "/config.yaml",
                 "r",
             )
         )

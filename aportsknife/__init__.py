@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2020 Bart Ribbers <bribbers@disroot.org>
+# SPDX-FileCopyrightText: 2022 Bart Ribbers <bribbers@disroot.org>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import argparse
