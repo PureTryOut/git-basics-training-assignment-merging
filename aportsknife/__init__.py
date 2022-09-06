@@ -114,7 +114,7 @@ def main():
 
     repositories: List[Repository] = []
     if args.select_version is not None:
-        found_packages_in_repositories = find_packages_with_pkgver(args.version)
+        found_packages_in_repositories = find_packages_with_pkgver(args.select_version)
 
         combine_repository_lists(repositories, found_packages_in_repositories)
 
