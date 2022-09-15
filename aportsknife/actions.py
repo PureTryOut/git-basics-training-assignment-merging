@@ -17,5 +17,7 @@ def update_pkgver(repositories: List[Repository], pkgver):
 
 def build(repositories):
     for repository in repositories:
+        repository.sort()
+
         for package in repository.packages:
             package.build()
