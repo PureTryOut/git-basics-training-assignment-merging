@@ -118,7 +118,7 @@ def main():
 
         combine_repository_lists(repositories, found_packages_in_repositories)
 
-    if args.select_changed is not None:
+    if args.select_changed is not False:
         found_packages_in_repositories = find_modified_packages()
 
         combine_repository_lists(repositories, found_packages_in_repositories)
