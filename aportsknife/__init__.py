@@ -10,6 +10,8 @@ import xdg
 import yaml
 
 from .actions import build, update_pkgver
+from .package import Package
+from .repository import Repository
 from .selectors import find_modified_packages, find_packages_with_pkgver
 
 
@@ -27,6 +29,32 @@ def init() -> None:
 
     with open(xdg.BaseDirectory.save_config_path("aportsknife") + "/config.yaml", "w") as file:
         yaml.dump({"aports_path": str(aports_path)}, file)
+
+
+def get_duplicates_in_lists(list1: [Repository], list2: [Repository]) -> [Repository]:
+    packages_list1 = []
+    packages_list2 = []
+
+    repository: Repository
+    for repository in list1:
+        packages_list1 += repository.packages
+
+    for repository in list2:
+        packages_list2 += repository.packages
+
+    duplicate_packages = set(packages_list1) & set(packages_list2)
+
+    repositories = []
+
+    package: Package
+    for package in duplicate_packages:
+        if package.repository not in repositories:
+            repositories.append(Repository(package.repository.path, []))
+
+        repository: Repository = repositories[repositories.index(package.repository)]
+        repository.packages.append(package)
+
+    return repositories
 
 
 def main():
@@ -94,34 +122,34 @@ def main():
         print("You need to select some packages to operate on")
         print("Run aportsknife -h for usage information")
         exit(1)
-    elif actions_used is False:
-        print("You need to specify an action to execute on the selected packages")
-        print("Run aportsknife -h for usage information")
-        exit(1)
-
-    def combine_repository_lists(list1, list2):
-        for found_repository in list2:
-            if found_repository not in list1:
-                list1.append(found_repository)
-            else:
-                repository = list1[list1.index(found_repository)]
-                for package in found_repository.packages:
-                    if package not in repository.packages:
-                        repository.packages.append(package)
+    if actions_used is False:
+        print("WARNING: No action has been specified")
 
     # Select packages
     print("Finding packages...")
 
-    repositories: List[Repository] = []
+    found_packages_by_selectors = {}
     if args.select_version is not None:
         found_packages_in_repositories = find_packages_with_pkgver(args.select_version)
 
-        combine_repository_lists(repositories, found_packages_in_repositories)
+        found_packages_by_selectors["select_version"] = found_packages_in_repositories
 
     if args.select_changed is not False:
         found_packages_in_repositories = find_modified_packages()
 
-        combine_repository_lists(repositories, found_packages_in_repositories)
+        found_packages_by_selectors["select_changed"] = found_packages_in_repositories
+
+    # Combine all packages found by the selectors into a single list with the duplicates between them
+    # That way we only get packages that have been found by all selectors
+    repositories: List[Repository] = []
+    i = 0
+    for key in found_packages_by_selectors:
+        if i == 0:
+            repositories = found_packages_by_selectors[key]
+        else:
+            repositories = get_duplicates_in_lists(repositories, found_packages_by_selectors[key])
+
+        i += 1
 
     found_package_count = 0
     for repository in repositories:

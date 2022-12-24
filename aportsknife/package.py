@@ -20,6 +20,9 @@ class Package:
     def __str__(self) -> str:
         return self.long_name
 
+    def __hash__(self) -> int:
+        return hash(self.long_name)
+
     def update_pkgver(self, pkgver):
         apkbuild = self.path / "APKBUILD"
         tmp_apkbuild = self.path / "APKBUILD~"
