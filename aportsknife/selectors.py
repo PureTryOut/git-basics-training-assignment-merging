@@ -75,3 +75,42 @@ def find_modified_packages() -> [Repository]:
         repository.sort()
 
     return repositories
+
+
+def find_packages_with_dep(dep_glob) -> [Repository]:
+    repositories = find_repositories()
+    for repository in repositories:
+        # Make a list of all packages to update
+        for package in [x for x in repository.path.iterdir() if x.is_dir()]:
+            apkbuild = [x for x in package.glob("**/*") if x.is_file() and x.name == "APKBUILD"]
+            if len(apkbuild) < 1:
+                continue
+
+            apkbuild = apkbuild[0]
+
+            with open(apkbuild) as source:
+                in_deps = False
+                lines_with_deps = []
+                for line in source:
+                    if (
+                        not in_deps
+                        and "depends=" in line
+                        or "makedepends=" in line
+                        or "depends_dev" in line
+                        or "checkdepends=" in line
+                    ):
+                        in_deps = True
+                        lines_with_deps.append(line)
+                    elif in_deps:
+                        lines_with_deps.append(line)
+                        if '"' in line:
+                            in_deps = False
+
+                if len(lines_with_deps) > 0:
+                    for line in lines_with_deps:
+                        if dep_glob in line:
+                            package = Package(repository, str(apkbuild).split("/")[-2])
+                            repository.packages.append(package)
+                            break
+
+    return repositories

@@ -12,7 +12,11 @@ import yaml
 from .actions import build, update_pkgver
 from .package import Package
 from .repository import Repository
-from .selectors import find_modified_packages, find_packages_with_pkgver
+from .selectors import (
+    find_modified_packages,
+    find_packages_with_dep,
+    find_packages_with_pkgver,
+)
 
 
 def init() -> None:
@@ -85,6 +89,11 @@ def main():
         action="store_true",
         help="Select packages changed in the current git branch",
     )
+    parser.add_argument(
+        "--select-with-dep",
+        type=str,
+        help="Select packages with this dependency (globbed, e.g. 'qt5-qtbase' will also find packages with 'qt5-qtbase-dev'",
+    )
 
     # Package actions
     parser.add_argument(
@@ -112,7 +121,7 @@ def main():
 
     selectors_used = False
     actions_used = False
-    if args.select_version is not None or args.select_changed is not False:
+    if not all(val is None for val in [args.select_version, args.select_with_dep]) or args.select_changed is not False:
         selectors_used = True
 
     if args.set_version is not None or args.build is not False:
@@ -138,6 +147,11 @@ def main():
         found_packages_in_repositories = find_modified_packages()
 
         found_packages_by_selectors["select_changed"] = found_packages_in_repositories
+
+    if args.select_with_dep is not None:
+        found_packages_in_repositories = find_packages_with_dep(args.select_with_dep)
+
+        found_packages_by_selectors["select_with_dep"] = found_packages_in_repositories
 
     # Combine all packages found by the selectors into a single list with the duplicates between them
     # That way we only get packages that have been found by all selectors

@@ -10,7 +10,7 @@ class Repository:
         self.name = path.name
         self.packages = packages
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         return self.name == other.name
 
     def sort(self):
