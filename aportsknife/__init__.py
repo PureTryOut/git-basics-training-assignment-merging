@@ -92,7 +92,8 @@ def main():
     parser.add_argument(
         "--select-with-dep",
         type=str,
-        help="Select packages with this dependency (globbed, e.g. 'qt5-qtbase' will also find packages with 'qt5-qtbase-dev'",
+        help="Select packages with this dependency "
+        "(globbed, e.g. 'qt5-qtbase' will also find packages with 'qt5-qtbase-dev'",
     )
 
     # Package actions
