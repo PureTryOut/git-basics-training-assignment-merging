@@ -58,6 +58,43 @@ class Package:
 
             exit(1)
 
+    def remove_dependency(self, dependency: str):
+        apkbuild = self.path / "APKBUILD"
+        tmp_apkbuild = self.path / "APKBUILD~"
+
+        os.rename(apkbuild, tmp_apkbuild)
+        destination = open(apkbuild, "w")
+        source = open(tmp_apkbuild, "r")
+
+        in_depends = False
+        line: str
+        for line in source:
+            if in_depends and '"' in line:
+                in_depends = False
+
+            if any(
+                substring in line
+                for substring in [
+                    "depends=",
+                    "makedepends=",
+                    "depends_dev=",
+                    "checkdepends=",
+                ]
+            ):
+                in_depends = True
+
+            if in_depends and dependency in line:
+                line = line.replace(f"\t{dependency}\n", "")
+                line = line.replace(f"{dependency} ", "")
+                line = line.replace(f" {dependency}", "")
+
+            destination.write(line)
+
+        # Make sure we clean up after ourselves
+        destination.close()
+        source.close()
+        os.remove(tmp_apkbuild)
+
     def build(self):
         os.chdir(self.path)
 

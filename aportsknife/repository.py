@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import subprocess
+from .package import Package
 
 
 class Repository:
@@ -33,6 +34,12 @@ class Repository:
 
         self.packages = packages
 
-    def update_packages_pkgver(self, pkgver):
+    def update_packages_pkgver(self, pkgver: str):
+        package: Package
         for package in self.packages:
             package.update_pkgver(pkgver)
+
+    def remove_dependency(self, dependency: str):
+        package: Package
+        for package in self.packages:
+            package.remove_dependency(dependency)

@@ -8,11 +8,16 @@ from typing import List
 from .repository import Repository
 
 
-def update_pkgver(repositories: List[Repository], pkgver):
+def update_pkgver(repositories: List[Repository], pkgver: str):
     for repository in repositories:
         repository.update_packages_pkgver(pkgver=pkgver)
 
     print("\n")
+
+
+def remove_dependency(repositories: List[Repository], dependency: str):
+    for repository in repositories:
+        repository.remove_dependency(dependency=dependency)
 
 
 def build(repositories):

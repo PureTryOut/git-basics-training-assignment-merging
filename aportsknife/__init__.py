@@ -9,7 +9,7 @@ from typing import List
 import xdg
 import yaml
 
-from .actions import build, update_pkgver
+from .actions import build, update_pkgver, remove_dependency
 from .package import Package
 from .repository import Repository
 from .selectors import (
@@ -92,7 +92,7 @@ def main():
     parser.add_argument(
         "--select-with-dep",
         type=str,
-        help="Select packages with this dependency (globbed, e.g. 'qt5-qtbase' will also find packages with 'qt5-qtbase-dev'",
+        help="Select all packages with this dependency (globbed, e.g. 'qt5-qtbase' will also find packages with 'qt5-qtbase-dev'",
     )
 
     # Package actions
@@ -100,6 +100,11 @@ def main():
         "--set-version",
         type=str,
         help="Set the selected packages to the specified version",
+    )
+    parser.add_argument(
+        "--remove-dependency",
+        type=str,
+        help="Remove the specified dependency from the selected packages",
     )
     parser.add_argument(
         "--build",
@@ -124,7 +129,7 @@ def main():
     if not all(val is None for val in [args.select_version, args.select_with_dep]) or args.select_changed is not False:
         selectors_used = True
 
-    if args.set_version is not None or args.build is not False:
+    if not all(val is None for val in [args.set_version, args.remove_dependency]) or args.build is not False:
         actions_used = True
 
     if selectors_used is False:
@@ -179,6 +184,10 @@ def main():
     if args.set_version is not None:
         print(f"Changing package versions to {args.set_version}...")
         update_pkgver(repositories=repositories, pkgver=args.set_version)
+
+    if args.remove_dependency is not None:
+        print(f"Removing {args.remove_dependency} from dependencies...")
+        remove_dependency(repositories=repositories, dependency=args.remove_dependency)
 
     if args.build is not False:
         print("Building packages...")

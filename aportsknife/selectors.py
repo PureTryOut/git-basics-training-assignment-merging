@@ -92,12 +92,14 @@ def find_packages_with_dep(dep_glob) -> [Repository]:
                 in_deps = False
                 lines_with_deps = []
                 for line in source:
-                    if (
-                        not in_deps
-                        and "depends=" in line
-                        or "makedepends=" in line
-                        or "depends_dev" in line
-                        or "checkdepends=" in line
+                    if not in_deps and any(
+                        substring in line
+                        for substring in [
+                            "depends=",
+                            "makedepends=",
+                            "depends_dev=",
+                            "checkdepends=",
+                        ]
                     ):
                         in_deps = True
                         lines_with_deps.append(line)
