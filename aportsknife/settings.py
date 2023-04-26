@@ -3,17 +3,17 @@
 
 from pathlib import Path
 
+import tomlkit
 import xdg
-import yaml
 
 
 class Settings:
     def __init__(self):
-        loaded_settings = yaml.safe_load(
-            open(
-                xdg.BaseDirectory.save_config_path("aportsknife") + "/config.yaml",
-                "r",
-            )
-        )
+        with open(
+            xdg.BaseDirectory.save_config_path("aportsknife") + "/config.toml",
+            "r",
+            encoding="utf-8",
+        ) as setting_file:
+            loaded_settings = tomlkit.parse(setting_file.read())
 
-        self.aports_path = Path(loaded_settings["aports_path"])
+            self.aports_path = Path(loaded_settings["general"]["aports_path"])

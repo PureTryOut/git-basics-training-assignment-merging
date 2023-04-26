@@ -6,8 +6,8 @@ import os
 from pathlib import Path
 from typing import List
 
+import tomlkit
 import xdg
-import yaml
 
 from .actions import build, update_pkgver
 from .package import Package
@@ -31,8 +31,16 @@ def init() -> None:
         if answer != "y":
             exit(0)
 
-    with open(xdg.BaseDirectory.save_config_path("aportsknife") + "/config.yaml", "w") as file:
-        yaml.dump({"aports_path": str(aports_path)}, file)
+    with open(
+        xdg.BaseDirectory.save_config_path("aportsknife") + "/config.toml",
+        "w",
+        encoding="utf-8",
+    ) as file:
+        toml_document = tomlkit.document()
+        toml_table_general = tomlkit.table()
+        toml_table_general.add("aports_path", str(aports_path))
+        toml_document.add("general", toml_table_general)
+        tomlkit.dump(toml_document, fp=file)
 
 
 def get_duplicates_in_lists(list1: [Repository], list2: [Repository]) -> [Repository]:
@@ -109,7 +117,7 @@ def main():
 
     args = parser.parse_args()
 
-    if not Path(xdg.BaseDirectory.save_config_path("aportsknife") + "/config.yaml").is_file() and (
+    if not Path(xdg.BaseDirectory.save_config_path("aportsknife") + "/config.toml").is_file() and (
         args.action is None or args.action != "init"
     ):
         print("Please run aportsknife init first")
